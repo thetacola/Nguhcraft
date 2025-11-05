@@ -533,6 +533,16 @@ object NguhBlocks {
     )
 
     // =========================================================================
+    //  Blocks for the evil horse that kills you
+    // =========================================================================
+
+    val EVIL_HAY = Register(
+        "evil_hay",
+        ::HayBlock,
+        AbstractBlock.Settings.copy(Blocks.HAY_BLOCK).mapColor(MapColor.GREEN)
+    )
+
+    // =========================================================================
     //  Block entities
     // =========================================================================
     val LOCKED_DOOR_BLOCK_ENTITY = RegisterEntity(
@@ -855,7 +865,8 @@ object NguhBlocks {
         STRIPPED_TINTED_OAK_WOOD,
         IRON_GRATE,
         WROUGHT_IRON_GRATE,
-        CHARCOAL_BLOCK
+        CHARCOAL_BLOCK,
+        EVIL_HAY
     ).also {
         it.addAll(CHAINS_AND_LANTERNS.flatten())
         it.addAll(ALL_BROCADE_BLOCKS)
@@ -889,6 +900,7 @@ object NguhBlocks {
             it.add(STRIPPED_TINTED_OAK_LOG)
             it.add(STRIPPED_TINTED_OAK_WOOD)
             it.add(CHARCOAL_BLOCK)
+            it.add(EVIL_HAY)
             for (B in ALL_VARIANT_FAMILY_BLOCKS) it.add(B)
             for (B in VERTICAL_SLABS) it.add(B)
             for (B in ALL_BROCADE_BLOCKS) it.add(B)

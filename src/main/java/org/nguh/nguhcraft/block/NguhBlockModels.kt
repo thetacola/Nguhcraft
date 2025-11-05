@@ -12,6 +12,7 @@ import net.minecraft.client.data.*
 import net.minecraft.client.data.BlockStateModelGenerator.createWeightedVariant
 import net.minecraft.client.data.ModelIds.getBlockModelId
 import net.minecraft.client.data.TextureKey.ALL
+import net.minecraft.client.data.TexturedModel
 import net.minecraft.client.render.BlockRenderLayer
 import net.minecraft.client.render.TexturedRenderLayers
 import net.minecraft.client.render.item.model.special.ChestModelRenderer
@@ -277,6 +278,9 @@ object NguhBlockModels {
 
         // Vertical slabs.
         for (V in VERTICAL_SLABS) RegisterVerticalSlab(G, V)
+
+        // Blocks with different top and side textures.
+        G.registerAxisRotated(NguhBlocks.EVIL_HAY, TexturedModel.CUBE_COLUMN, TexturedModel.CUBE_COLUMN_HORIZONTAL)
 
         // Chest variants. Copied from registerChest().
         val Template = Models.TEMPLATE_CHEST.upload(Items.CHEST, TextureMap.particle(Blocks.OAK_PLANKS), G.modelCollector)

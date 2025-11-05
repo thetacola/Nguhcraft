@@ -106,6 +106,9 @@ class NguhcraftBlockTagProvider(
             .add(Blocks.CORNFLOWER)
             .add(Blocks.LILY_OF_THE_VALLEY)
 
+        // Block tag for the evil hay.
+        valueLookupBuilder(BlockTags.HOE_MINEABLE).add(NguhBlocks.EVIL_HAY)
+
         // Add blocks from families.
         val Fences = valueLookupBuilder(BlockTags.FENCES)
         val Walls = valueLookupBuilder(BlockTags.WALLS)

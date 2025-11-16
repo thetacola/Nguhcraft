@@ -15,7 +15,7 @@ import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
-import org.nguh.nguhcraft.entity.mob.EvilHorse.EvilHorse
+import org.nguh.nguhcraft.entity.mob.EvilHorseEntity
 import org.nguh.nguhcraft.render.entity.model.EvilHorseModel
 
 
@@ -27,9 +27,9 @@ object NguhEntities {
     //  Entity types
     // =========================================================================
 
-    val EVIL_HORSE: EntityType<EvilHorse> = register(
+    val EVIL_HORSE: EntityType<EvilHorseEntity> = register(
         "evil_horse",
-        EntityType.Builder.create(::EvilHorse, SpawnGroup.CREATURE)
+        EntityType.Builder.create(::EvilHorseEntity, SpawnGroup.CREATURE)
             .dimensions(1.3964844F, 1.6F) // I cannot believe this is the actual, vanilla width of a horse
             .eyeHeight(1.52F)
             .passengerAttachments(1.44375F)
@@ -53,7 +53,7 @@ object NguhEntities {
 
 
     fun Init() {
-        FabricDefaultAttributeRegistry.register(EVIL_HORSE, EvilHorse.createEvilHorseAttributes());
+        FabricDefaultAttributeRegistry.register(EVIL_HORSE, EvilHorseEntity.createEvilHorseAttributes());
         onInitializeClient()
     }
 

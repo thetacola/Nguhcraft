@@ -3,18 +3,27 @@ package org.nguh.nguhcraft.entity
 import EvilHorseRenderer
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.biome.v1.BiomeModifications
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
 import net.fabricmc.fabric.api.`object`.builder.v1.entity.FabricDefaultAttributeRegistry
 import net.minecraft.client.render.entity.model.EntityModelLayer
+import net.minecraft.client.render.entity.state.LivingHorseEntityRenderState
 import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityType
 import net.minecraft.entity.SpawnGroup
+import net.minecraft.entity.SpawnLocationTypes
+import net.minecraft.entity.SpawnRestriction
+import net.minecraft.entity.passive.AnimalEntity
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
+import net.minecraft.world.Heightmap
+import net.minecraft.world.biome.BiomeKeys
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
+import org.nguh.nguhcraft.client.render.entity.state.EvilHorseEntityRenderState
 import org.nguh.nguhcraft.entity.mob.EvilHorseEntity
 import org.nguh.nguhcraft.render.entity.model.EvilHorseModel
 
@@ -29,7 +38,7 @@ object NguhEntities {
 
     val EVIL_HORSE: EntityType<EvilHorseEntity> = register(
         "evil_horse",
-        EntityType.Builder.create(::EvilHorseEntity, SpawnGroup.CREATURE)
+        EntityType.Builder.create(::EvilHorseEntity, SpawnGroup.MONSTER)
             .dimensions(1.3964844F, 1.6F) // I cannot believe this is the actual, vanilla width of a horse
             .eyeHeight(1.52F)
             .passengerAttachments(1.44375F)
@@ -53,13 +62,18 @@ object NguhEntities {
 
 
     fun Init() {
+        // =========================================================================
+        //  Attribute registration
+        // =========================================================================
         FabricDefaultAttributeRegistry.register(EVIL_HORSE, EvilHorseEntity.createEvilHorseAttributes());
+
         onInitializeClient()
     }
 
     @Environment(EnvType.CLIENT)
     fun onInitializeClient() {
-        EntityRendererRegistry.register(EVIL_HORSE, { context -> EvilHorseRenderer(context) })
+        EntityRendererRegistry.register(EVIL_HORSE,
+            { context -> EvilHorseRenderer(context) })
 
 
         EntityModelLayerRegistry.registerModelLayer(

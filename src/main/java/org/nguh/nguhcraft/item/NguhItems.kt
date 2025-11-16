@@ -6,6 +6,9 @@ import net.minecraft.client.data.ItemModelGenerator
 import net.minecraft.client.data.Model
 import net.minecraft.client.data.Models
 import net.minecraft.component.DataComponentTypes
+import net.minecraft.entity.EntityType
+import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.mob.MobEntity
 import net.minecraft.item.*
 import net.minecraft.item.equipment.ArmorMaterial
 import net.minecraft.item.equipment.EquipmentAsset
@@ -27,6 +30,7 @@ import org.nguh.nguhcraft.Nguhcraft.Companion.RKey
 import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.block.ChestVariant
 import org.nguh.nguhcraft.block.NguhBlocks
+import org.nguh.nguhcraft.entity.NguhEntities
 import java.util.*
 
 object NguhItems {
@@ -185,6 +189,16 @@ object NguhItems {
     )
 
     // =========================================================================
+    //  Spawn Eggs
+    // =========================================================================
+    val EVIL_HORSE_SPAWN_EGG: Item = CreateSpawnEgg(
+        Id("evil_horse_spawn_egg"),
+        NguhEntities.EVIL_HORSE,
+        Item.Settings().maxCount(64)
+    )
+
+
+    // =========================================================================
     //  Initialisation
     // =========================================================================
     fun BootstrapArmourTrims(R: Registerable<ArmorTrimPattern>) {
@@ -203,6 +217,7 @@ object NguhItems {
         }
 
         Register(EVIL_WHEAT)
+        Register(EVIL_HORSE_SPAWN_EGG)
         Register(LOCK)
         Register(KEY)
         Register(KEY_CHAIN)
@@ -260,6 +275,10 @@ object NguhItems {
             for (T in ALL_NGUHCRAFT_ARMOUR_TRIMS) it.add(T)
         }
 
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.SPAWN_EGGS).register {
+            it.add(EVIL_HORSE_SPAWN_EGG)
+        }
+
         KeyLockPairingRecipe.SERIALISER = Registry.register(
             Registries.RECIPE_SERIALIZER,
             Id("crafting_special_key_lock_pairing"),
@@ -281,6 +300,9 @@ object NguhItems {
 
     private fun CreateItem(Id: Identifier, S: Item.Settings): Item =
         Registry.register(Registries.ITEM, Id, Item(S.registryKey(Key(Id))))
+
+    private fun CreateSpawnEgg(Id: Identifier, E: EntityType<out MobEntity>, S: Item.Settings): Item =
+        Registry.register(Registries.ITEM, Id, SpawnEggItem(E, S.registryKey(Key(Id))))
 
     private fun CreateSmithingTemplate(S: String, I: Item.Settings): Item {
         val Id = Id(S)

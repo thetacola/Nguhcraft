@@ -20,6 +20,7 @@ import net.minecraft.util.Identifier
 import net.minecraft.util.WorldSavePath
 import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.item.NguhItems
+import org.nguh.nguhcraft.entity.NguhEntities
 import org.nguh.nguhcraft.network.*
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.server.*
@@ -176,6 +177,7 @@ class Nguhcraft : ModInitializer {
         Commands.Register()
         NguhItems.Init()
         NguhBlocks.Init()
+        NguhEntities.Init()
         NguhSounds.Init()
         ServerNetworkHandler.Init()
 
@@ -183,6 +185,7 @@ class Nguhcraft : ModInitializer {
         ServerTickEvents.START_WORLD_TICK.register { ServerUtils.TickWorld(it) }
         ServerLifecycleEvents.BEFORE_SAVE.register { it, _, _ -> SaveServerState(it) }
     }
+
 
     companion object {
         private val LOGGER = LogUtils.getLogger()

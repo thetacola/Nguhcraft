@@ -86,6 +86,8 @@ class NguhcraftRecipeGenerator(
             cinput('r', Items.REDSTONE)
         }
 
+        offerShapelessRecipe(NguhItems.EVIL_WHEAT, 9, NguhBlocks.EVIL_HAY to 1)
+
         // =========================================================================
         // Vanilla Block Decompositions
         // =========================================================================
@@ -177,6 +179,13 @@ class NguhcraftRecipeGenerator(
             pattern("ccc")
             pattern("ccc")
             cinput('c', Items.CHARCOAL)
+        }
+
+        offerShaped(NguhBlocks.EVIL_HAY, 1) {
+            pattern("www")
+            pattern("www")
+            pattern("www")
+            cinput('w', NguhItems.EVIL_WHEAT)
         }
 
         offerChainAndLantern(NguhBlocks.OCHRE_CHAIN, NguhBlocks.OCHRE_LANTERN, Items.RESIN_CLUMP, Items.OCHRE_FROGLIGHT)

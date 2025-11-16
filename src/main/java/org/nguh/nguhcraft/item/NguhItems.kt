@@ -33,6 +33,7 @@ object NguhItems {
     // =========================================================================
     //  Items
     // =========================================================================
+    val EVIL_WHEAT: Item = CreateItem(Id("evil_wheat"), Item.Settings().maxCount(64))
     val LOCK: Item = CreateItem(LockItem.ID, LockItem())
     val KEY: Item = CreateItem(KeyItem.ID, KeyItem())
     val MASTER_KEY: Item = CreateItem(MasterKeyItem.ID, MasterKeyItem())
@@ -201,6 +202,7 @@ object NguhItems {
             G.register(I, M)
         }
 
+        Register(EVIL_WHEAT)
         Register(LOCK)
         Register(KEY)
         Register(KEY_CHAIN)
@@ -229,6 +231,7 @@ object NguhItems {
 
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
+            it.add(EVIL_WHEAT)
             it.add(LOCK)
             it.add(KEY)
             it.add(KEY_CHAIN)

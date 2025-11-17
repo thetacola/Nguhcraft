@@ -6,8 +6,8 @@ import net.minecraft.client.data.ItemModelGenerator
 import net.minecraft.client.data.Model
 import net.minecraft.client.data.Models
 import net.minecraft.component.DataComponentTypes
+import net.minecraft.component.type.FoodComponent
 import net.minecraft.entity.EntityType
-import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.MobEntity
 import net.minecraft.item.*
 import net.minecraft.item.equipment.ArmorMaterial
@@ -37,6 +37,7 @@ object NguhItems {
     // =========================================================================
     //  Items
     // =========================================================================
+    val EVIL_BREAD: Item = CreateItem(Id("evil_bread"), Item.Settings().food(NguhFoodComponents.EVIL_BREAD))
     val EVIL_WHEAT: Item = CreateItem(Id("evil_wheat"), Item.Settings().maxCount(64))
     val LOCK: Item = CreateItem(LockItem.ID, LockItem())
     val KEY: Item = CreateItem(KeyItem.ID, KeyItem())
@@ -216,8 +217,9 @@ object NguhItems {
             G.register(I, M)
         }
 
-        Register(EVIL_WHEAT)
+        Register(EVIL_BREAD)
         Register(EVIL_HORSE_SPAWN_EGG)
+        Register(EVIL_WHEAT)
         Register(LOCK)
         Register(KEY)
         Register(KEY_CHAIN)
@@ -246,7 +248,6 @@ object NguhItems {
 
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
-            it.add(EVIL_WHEAT)
             it.add(LOCK)
             it.add(KEY)
             it.add(KEY_CHAIN)
@@ -271,8 +272,13 @@ object NguhItems {
             it.add(NGUHROVISION_2024_DISC)
         }
 
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.FOOD_AND_DRINK).register {
+            it.add(EVIL_BREAD)
+        }
+
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.INGREDIENTS).register {
             for (T in ALL_NGUHCRAFT_ARMOUR_TRIMS) it.add(T)
+            it.add(EVIL_WHEAT)
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.SPAWN_EGGS).register {
@@ -314,4 +320,10 @@ object NguhItems {
     }
 
     private fun Key(Id: Identifier) = RegistryKey.of(RegistryKeys.ITEM, Id)
+}
+
+class NguhFoodComponents {
+    companion object {
+        val EVIL_BREAD: FoodComponent = FoodComponent.Builder().nutrition(-5).saturationModifier(-0.6f).build()
+    }
 }

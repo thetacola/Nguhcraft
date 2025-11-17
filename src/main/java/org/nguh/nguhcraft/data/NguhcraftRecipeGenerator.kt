@@ -63,6 +63,11 @@ class NguhcraftRecipeGenerator(
         // =========================================================================
         //  Items
         // =========================================================================
+        offerShaped(NguhItems.EVIL_BREAD) {
+            pattern("eee")
+            cinput('e', NguhItems.EVIL_WHEAT)
+        }
+
         offerShaped(NguhItems.KEY) {
             pattern("g ")
             pattern("gr")

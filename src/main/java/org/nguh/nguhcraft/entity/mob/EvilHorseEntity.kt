@@ -1,9 +1,6 @@
 package org.nguh.nguhcraft.entity.mob
 
-import net.minecraft.entity.AreaEffectCloudEntity
-import net.minecraft.entity.Entity
-import net.minecraft.entity.EntityType
-import net.minecraft.entity.LightningEntity
+import net.minecraft.entity.*
 import net.minecraft.entity.ai.goal.*
 import net.minecraft.entity.attribute.DefaultAttributeContainer
 import net.minecraft.entity.attribute.EntityAttributes
@@ -12,13 +9,14 @@ import net.minecraft.entity.data.DataTracker
 import net.minecraft.entity.data.TrackedData
 import net.minecraft.entity.data.TrackedDataHandlerRegistry
 import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.entity.passive.AbstractHorseEntity
-import net.minecraft.entity.passive.CatEntity
-import net.minecraft.entity.passive.OcelotEntity
-import net.minecraft.entity.passive.VillagerEntity
+import net.minecraft.entity.passive.*
 import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.item.ItemStack
+import net.minecraft.particle.ParticleTypes
 import net.minecraft.registry.tag.ItemTags
+import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
+import net.minecraft.sound.BlockSoundGroup
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvent
 import net.minecraft.sound.SoundEvents
@@ -28,9 +26,18 @@ import net.minecraft.util.ActionResult
 import net.minecraft.util.Hand
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.MathHelper
+import net.minecraft.util.math.random.Random
+import net.minecraft.world.GameRules
 import net.minecraft.world.World
 import net.minecraft.world.WorldView
 import net.minecraft.world.event.GameEvent
+import org.nguh.nguhcraft.entity.NguhEntities
+import org.nguh.nguhcraft.entity.ai.EvilHorseIgniteGoal
+import org.nguh.nguhcraft.item.NguhItems
+import java.util.*
+import java.util.function.DoubleSupplier
+import java.util.function.IntUnaryOperator
+import java.util.function.Predicate
 
 open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>, world: World) :
     AbstractHorseEntity(entityType, world) {
@@ -42,6 +49,10 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
             DataTracker.registerData(EvilHorseEntity::class.java, TrackedDataHandlerRegistry.BOOLEAN)
         private val IGNITED: TrackedData<Boolean> =
             DataTracker.registerData(EvilHorseEntity::class.java, TrackedDataHandlerRegistry.BOOLEAN)
+        private val TAMEABLE_FLAGS: TrackedData<Byte> =
+            DataTracker.registerData(EvilHorseEntity::class.java, TrackedDataHandlerRegistry.BYTE)
+        private val OWNER_UUID: TrackedData<Optional<LazyEntityReference<LivingEntity>>> =
+            DataTracker.registerData(EvilHorseEntity::class.java, TrackedDataHandlerRegistry.LAZY_ENTITY_REFERENCE)
         private var DEFAULT_CHARGED: Boolean = false
         private var DEFAULT_IGNITED: Boolean = false
         private var DEFAULT_FUSE: Short = 60
@@ -106,7 +117,7 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
         damagePerDistance: Float,
         damageSource: DamageSource?
     ): Boolean {
-        val bl: Boolean = super.handleFallDamage(fallDistance, damagePerDistance, damageSource);
+        val bl: Boolean = super.handleFallDamage(fallDistance, damagePerDistance, damageSource)
         currentFuseTime += (fallDistance * 1.5).toInt()
         if (currentFuseTime > this.fuseTime - 5) {
             currentFuseTime = this.fuseTime - 5
@@ -120,14 +131,17 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
         builder.add(FUSE_SPEED, -1)
         builder.add(CHARGED, false)
         builder.add(IGNITED, false)
+        builder.add(TAMEABLE_FLAGS, 0)
+        builder.add(OWNER_UUID, Optional.empty())
     }
 
     override fun writeCustomData(view: WriteView) {
         super.writeCustomData(view)
         view.putBoolean("powered", this.isCharged())
         view.putShort("Fuse", this.fuseTime.toShort())
-        view.putByte("ExplosionRadius", this.explosionRadius.toByte())
+        view.putByte("ExplosionRadius", this.explosionRadius)
         view.putBoolean("ignited", this.isIgnited())
+        LazyEntityReference.writeData(this.ownerReference, view, "Owner")
     }
 
     override fun readCustomData(view: ReadView) {
@@ -138,6 +152,18 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
         if (view.getBoolean("ignited", false)) {
             this.ignite()
         }
+        val lazyEntityReference = LazyEntityReference.fromDataOrPlayerName<LivingEntity>(view, "Owner", this.world)
+        if (lazyEntityReference != null) {
+            try {
+                this.dataTracker.set(OWNER_UUID, Optional.of(lazyEntityReference))
+                this.setTamed(true, false)
+            } catch (e: Throwable) {
+                this.setTamed(false, true)
+            }
+        } else {
+            this.dataTracker.set(OWNER_UUID, Optional.empty())
+            this.setTamed(false, true)
+        }
     }
 
     override fun tick() {
@@ -147,7 +173,7 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
                 this.setFuseSpeed(1)
             }
 
-            var i = this.getFuseSpeed()
+            val i = this.getFuseSpeed()
             if (i > 0 && this.currentFuseTime == 0) {
                 this.playSound(SoundEvents.ENTITY_CREEPER_PRIMED, 1.0F, 0.25F)
                 this.emitGameEvent(GameEvent.PRIME_FUSE)
@@ -167,6 +193,12 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
         super.tick()
     }
 
+    override fun setTarget(target: LivingEntity?) {
+        if (target !is GoatEntity) {
+            super.setTarget(target)
+        }
+    }
+
     override fun dropEquipment(world: ServerWorld?, source: DamageSource?, causedByPlayer: Boolean) {
         // TODO: add evil horse head
         super.dropEquipment(world, source, causedByPlayer)
@@ -184,7 +216,7 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
     // I have no idea what "lerped" means but this is part of the fuse math, apparently
     fun getLerpedFuseTime(tickProgress: Float): Float {
         return (MathHelper.lerp(tickProgress, this.lastFuseTime.toFloat(), this.currentFuseTime.toFloat())
-                / (this.fuseTime - 2));
+                / (this.fuseTime - 2))
     }
 
     fun getFuseSpeed(): Int {
@@ -203,7 +235,7 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
 
     // ignite if holding creeper igniters, otherwise do horse things
     override fun interactMob(player: PlayerEntity, hand: Hand): ActionResult? {
-        var itemStack = player.getStackInHand(hand)
+        val itemStack = player.getStackInHand(hand)
         if (itemStack.isIn(ItemTags.CREEPER_IGNITERS)) {
             // TODO: make the sound different if it's a fire charge
             val soundEvent = SoundEvents.ITEM_FLINTANDSTEEL_USE
@@ -222,8 +254,60 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
 
             return ActionResult.SUCCESS
         } else {
-            return super.interactMob(player, hand)
+            val bl = !this.isBaby && this.isTame && player.shouldCancelInteraction()
+
+            if (!this.hasPassengers() && !bl) {
+                var itemStack = player.getStackInHand(hand)
+                if (!itemStack.isEmpty) {
+                    if (this.isBreedingItem(itemStack)) {
+                        return this.interactHorse(player, itemStack)
+                    }
+                    if (!this.isTame) {
+                        this.playAngrySound()
+                        return ActionResult.SUCCESS
+                    }
+                }
+                return super.interactMob(player, hand)
+            } else {
+                return super.interactMob(player, hand)
+            }
         }
+    }
+
+    override fun canBreedWith(other: AnimalEntity?): Boolean {
+        if (other == this) {
+            return false;
+        } else {
+            if (other is EvilHorseEntity) {
+                if (this.isTamed() == other.isTamed()) {
+                    return this.canBreed() && other.canBreed()
+                } else {
+                    return false
+                }
+            } else {
+                return false
+            }
+        }
+    }
+
+    override fun createChild(world: ServerWorld, entity: PassiveEntity): PassiveEntity? {
+        val evilHorseEntity = NguhEntities.EVIL_HORSE.create(world, net.minecraft.entity.SpawnReason.BREEDING)
+        if (evilHorseEntity != null && entity is EvilHorseEntity) {
+            this.setChildAttributes(entity, evilHorseEntity)
+            if (this.isTamed()) {
+                evilHorseEntity.setOwner(this.ownerReference)
+                evilHorseEntity.setTamed(true, true)
+            }
+        }
+        return evilHorseEntity
+    }
+
+    override fun canUseSlot(slot: EquipmentSlot?): Boolean {
+        return true
+    }
+
+    override fun damageArmor(source: DamageSource, amount: Float) {
+        this.damageEquipment(source, amount, *arrayOf<EquipmentSlot>(EquipmentSlot.BODY))
     }
 
     fun explode() {
@@ -244,15 +328,15 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
                 World.ExplosionSourceType.MOB
             )
             this.spawnEffectsCloud()
-            this.onRemoval(world as ServerWorld, Entity.RemovalReason.KILLED)
+            this.onRemoval(world as ServerWorld, RemovalReason.KILLED)
             this.discard()
         }
     }
 
     fun spawnEffectsCloud() {
-        var collection = this.getStatusEffects()
+        val collection = this.statusEffects
         if (!collection.isEmpty()) {
-            var areaEffectCloudEntity = AreaEffectCloudEntity(this.world, this.x, this.y, this.z)
+            val areaEffectCloudEntity = AreaEffectCloudEntity(this.world, this.x, this.y, this.z)
             areaEffectCloudEntity.radius = this.explosionRadius.toFloat() // this should be a fun change
             areaEffectCloudEntity.radiusOnUse = -0.5F
             areaEffectCloudEntity.waitTime = 10
@@ -285,18 +369,127 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
         this.headsDropped++
     }
 
+    // stolen from HorseEntity
+
+    override fun initAttributes(random: Random) {
+        this.getAttributeInstance(EntityAttributes.MAX_HEALTH)!!.baseValue =
+            getChildHealthBonus(IntUnaryOperator { bound: Int -> random.nextInt(bound) }).toDouble()
+        this.getAttributeInstance(EntityAttributes.MOVEMENT_SPEED)!!.baseValue =
+            getChildMovementSpeedBonus(DoubleSupplier { random.nextDouble() })
+        this.getAttributeInstance(EntityAttributes.JUMP_STRENGTH)!!.baseValue =
+            getChildJumpStrengthBonus(DoubleSupplier { random.nextDouble() })
+    }
+
+    override fun playWalkSound(group: BlockSoundGroup?) {
+        super.playWalkSound(group)
+        if (this.random.nextInt(10) == 0) {
+            this.playSound(SoundEvents.ENTITY_HORSE_BREATHE, group!!.getVolume() * 0.6f, group.getPitch())
+        }
+    }
+
+    // stolen from TameableEntity
+
+    fun setTamed(tamed: Boolean, updateAttributes: Boolean) {
+        val b = this.dataTracker.get(TAMEABLE_FLAGS)
+        if (tamed) {
+            this.dataTracker.set(TAMEABLE_FLAGS, (b.toInt() or 4).toByte())
+        } else {
+            this.dataTracker.set(TAMEABLE_FLAGS, (b.toInt() and -5).toByte())
+        }
+    }
+
+    fun setTamedBy(player: PlayerEntity) {
+        this.setTamed(true, true)
+    }
+
+    override fun setOwner(owner: LivingEntity?) {
+        this.dataTracker.set(OWNER_UUID, Optional.ofNullable(owner).map(::LazyEntityReference))
+    }
+
+    fun setOwner(owner: LazyEntityReference<LivingEntity>?) {
+        this.dataTracker.set(OWNER_UUID, Optional.ofNullable(owner))
+    }
+
+    override fun onDeath(damageSource: DamageSource) {
+        if (this.world is ServerWorld) {
+            val serverWorld = world as ServerWorld
+            if (serverWorld.gameRules.getBoolean(GameRules.SHOW_DEATH_MESSAGES)
+                && this.owner is ServerPlayerEntity) {
+                val spe = owner as ServerPlayerEntity
+                spe.sendMessage(this.damageTracker.deathMessage)
+            }
+        }
+
+        super.onDeath(damageSource)
+    }
+
+    // stolen from WolfEntity
+
+    fun tryTame(player: PlayerEntity) {
+        if (this.random.nextInt(3) == 0) {
+            this.setTamedBy(player)
+            this.world.sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES)
+        } else {
+            this.world.sendEntityStatus(this, EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES)
+        }
+    }
+
+    protected fun showEmoteParticle(positive: Boolean) {
+        var particleEffect = ParticleTypes.HEART
+        if (!positive) {
+            particleEffect = ParticleTypes.SMOKE
+        }
+
+        for (i in 0..6) {
+            val d = this.random.nextGaussian() * 0.02
+            val e = this.random.nextGaussian() * 0.02
+            val f = this.random.nextGaussian() * 0.02
+            this.world.addParticleClient(
+                particleEffect,
+                this.getParticleX(1.0),
+                this.randomBodyY + 0.5,
+                this.getParticleZ(1.0),
+                d,
+                e,
+                f
+            )
+        }
+    }
+
+    override fun isBreedingItem(stack: ItemStack): Boolean {
+        return stack.isOf(NguhItems.EVIL_WHEAT)
+    }
+
+    override fun handleStatus(status: Byte) {
+        if (status == EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES) {
+            this.showEmoteParticle(true)
+        } else if (status == EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES) {
+            this.showEmoteParticle(false)
+        } else {
+            super.handleStatus(status)
+        }
+    }
+
+    fun isTamed(): Boolean {
+        return (this.dataTracker.get<Byte>(TAMEABLE_FLAGS).toInt() and 4) != 0
+    }
+
+
     // stolen from other places
 
     override fun initGoals() {
         this.goalSelector.add(1, SwimGoal(this))
-        //this.goalSelector.add(2, EvilHorseIgniteGoal(this))
+        this.goalSelector.add(2, EvilHorseIgniteGoal(this))
         this.goalSelector.add(3, FleeEntityGoal(this, OcelotEntity::class.java, 6.0f, 1.0, 1.2))
         this.goalSelector.add(3, FleeEntityGoal(this, CatEntity::class.java, 6.0f, 1.0, 1.2))
-        this.goalSelector.add(4, MeleeAttackGoal(this, 1.0, false))
-        this.goalSelector.add(5, WanderAroundFarGoal(this, 0.8))
-        this.goalSelector.add(6, LookAtEntityGoal(this, PlayerEntity::class.java, 128.0f))
-        this.goalSelector.add(6, LookAroundGoal(this))
-        this.goalSelector.add(7, LookAtEntityGoal(this, VillagerEntity::class.java, 128.0f))
+        this.goalSelector.add(4, AnimalMateGoal(this, 1.0))
+        this.goalSelector.add(5, TemptGoal(this, 1.2, Predicate { stack: ItemStack? -> stack!!.isIn(ItemTags.HORSE_FOOD) }, false))
+        this.goalSelector.add(5, TemptGoal(this, 1.2, Predicate { stack: ItemStack? -> stack!!.isIn(ItemTags.HORSE_TEMPT_ITEMS) }, false))
+        this.goalSelector.add(6, MeleeAttackGoal(this, 1.0, false))
+        this.goalSelector.add(7, WanderAroundFarGoal(this, 0.8))
+        this.goalSelector.add(8, LookAtEntityGoal(this, PlayerEntity::class.java, 128.0f))
+        this.goalSelector.add(8, LookAroundGoal(this))
+        this.goalSelector.add(9, LookAtEntityGoal(this, VillagerEntity::class.java, 128.0f))
         this.targetSelector.add(1, ActiveTargetGoal(this, PlayerEntity::class.java, true))
         this.targetSelector.add(2, RevengeGoal(this))
     }
@@ -315,7 +508,7 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
         return SoundEvents.ENTITY_HORSE_EAT
     }
 
-    fun getHurtSound(): SoundEvent {
+    override fun getHurtSound(source: DamageSource): SoundEvent {
         return SoundEvents.ENTITY_HORSE_HURT
     }
 

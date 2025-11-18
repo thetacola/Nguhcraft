@@ -1,12 +1,9 @@
-package org.nguh.nguhcraft.client.render.entity.feature
+package org.nguh.nguhcraft.entity
 
 import net.minecraft.client.render.entity.feature.EnergySwirlOverlayFeatureRenderer
 import net.minecraft.client.render.entity.feature.FeatureRendererContext
 import net.minecraft.client.render.entity.model.LoadedEntityModels
 import net.minecraft.util.Identifier
-import org.nguh.nguhcraft.client.render.entity.state.EvilHorseEntityRenderState
-import org.nguh.nguhcraft.entity.NguhEntities
-import org.nguh.nguhcraft.render.entity.model.EvilHorseModel
 
 open class EvilHorseChargeFeatureRenderer(
     context: FeatureRendererContext<EvilHorseEntityRenderState?, EvilHorseModel?>?,

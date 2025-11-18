@@ -1,3 +1,4 @@
+package org.nguh.nguhcraft.entity
 
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
@@ -6,18 +7,15 @@ import net.minecraft.client.render.entity.EntityRendererFactory
 import net.minecraft.client.render.entity.equipment.EquipmentModel
 import net.minecraft.client.render.entity.feature.SaddleFeatureRenderer
 import net.minecraft.client.render.entity.model.EntityModelLayers
-import net.minecraft.client.render.entity.model.HorseEntityModel
-import net.minecraft.client.render.entity.state.HorseEntityRenderState
+import net.minecraft.client.render.entity.state.LivingHorseEntityRenderState
 import net.minecraft.client.util.math.MatrixStack
+import net.minecraft.item.ItemStack
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.MathHelper
-import org.nguh.nguhcraft.client.render.entity.feature.EvilHorseBabyChargeFeatureRenderer
-import org.nguh.nguhcraft.client.render.entity.feature.EvilHorseChargeFeatureRenderer
-import org.nguh.nguhcraft.client.render.entity.state.EvilHorseEntityRenderState
-import org.nguh.nguhcraft.entity.EvilHorseEntity
-import org.nguh.nguhcraft.render.entity.model.EvilHorseModel
+import org.nguh.nguhcraft.entity.EvilHorseBabyChargeFeatureRenderer
+import org.nguh.nguhcraft.entity.EvilHorseChargeFeatureRenderer
+import org.nguh.nguhcraft.entity.EvilHorseEntityRenderState
 import java.util.function.Function
-
 
 @Environment(EnvType.CLIENT)
 class EvilHorseRenderer(context: EntityRendererFactory.Context)
@@ -32,7 +30,8 @@ class EvilHorseRenderer(context: EntityRendererFactory.Context)
             context.getEquipmentRenderer(),
             EquipmentModel.LayerType.HORSE_BODY,
             Function { evilHorseEntityRenderState: EvilHorseEntityRenderState? ->
-                evilHorseEntityRenderState!!.armor },
+                evilHorseEntityRenderState!!.armor
+            },
             EvilHorseModel(context.getPart(EntityModelLayers.HORSE_ARMOR)),
             EvilHorseModel(context.getPart(EntityModelLayers.HORSE_ARMOR_BABY))
         )
@@ -43,7 +42,8 @@ class EvilHorseRenderer(context: EntityRendererFactory.Context)
             context.getEquipmentRenderer(),
             EquipmentModel.LayerType.HORSE_SADDLE,
             Function { evilHorseEntityRenderState: EvilHorseEntityRenderState? ->
-                evilHorseEntityRenderState!!.saddleStack },
+                evilHorseEntityRenderState!!.saddleStack
+            },
             EvilHorseModel(context.getPart(EntityModelLayers.HORSE_ARMOR)),
             EvilHorseModel(context.getPart(EntityModelLayers.HORSE_ARMOR_BABY))
         )
@@ -104,3 +104,10 @@ class EvilHorseRenderer(context: EntityRendererFactory.Context)
 
 }
 
+@Environment(EnvType.CLIENT)
+open class EvilHorseEntityRenderState() : LivingHorseEntityRenderState() {
+    var armor = ItemStack.EMPTY
+    var fuseTime = 0F
+    var charged = false
+    var isBaby = false
+}

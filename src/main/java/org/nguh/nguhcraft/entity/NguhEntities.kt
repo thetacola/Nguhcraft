@@ -1,6 +1,6 @@
 package org.nguh.nguhcraft.entity
 
-import EvilHorseRenderer
+import org.nguh.nguhcraft.entity.EvilHorseRenderer
 import com.google.common.collect.ImmutableMap
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
@@ -26,9 +26,9 @@ import net.minecraft.registry.RegistryKeys
 import net.minecraft.world.Heightmap
 import net.minecraft.world.biome.BiomeKeys
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
-import org.nguh.nguhcraft.client.render.entity.state.EvilHorseEntityRenderState
+import org.nguh.nguhcraft.entity.EvilHorseEntityRenderState
 import org.nguh.nguhcraft.entity.EvilHorseEntity
-import org.nguh.nguhcraft.render.entity.model.EvilHorseModel
+import org.nguh.nguhcraft.entity.EvilHorseModel
 
 
 // TODO: make sections for the mobs, right now it's just one creature but that may change in the future

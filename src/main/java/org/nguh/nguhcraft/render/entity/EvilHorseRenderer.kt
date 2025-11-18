@@ -11,9 +11,10 @@ import net.minecraft.client.render.entity.state.HorseEntityRenderState
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.MathHelper
+import org.nguh.nguhcraft.client.render.entity.feature.EvilHorseBabyChargeFeatureRenderer
 import org.nguh.nguhcraft.client.render.entity.feature.EvilHorseChargeFeatureRenderer
 import org.nguh.nguhcraft.client.render.entity.state.EvilHorseEntityRenderState
-import org.nguh.nguhcraft.entity.mob.EvilHorseEntity
+import org.nguh.nguhcraft.entity.EvilHorseEntity
 import org.nguh.nguhcraft.render.entity.model.EvilHorseModel
 import java.util.function.Function
 
@@ -54,6 +55,13 @@ class EvilHorseRenderer(context: EntityRendererFactory.Context)
         )
     )
 
+    val babyChargeFeature = this.addFeature(
+        EvilHorseBabyChargeFeatureRenderer(
+            this,
+            context.entityModels
+        )
+    )
+
     override fun scale(state: EvilHorseEntityRenderState, matrixStack: MatrixStack) {
         var f = state.fuseTime
         var g = 1.0F + MathHelper.sin(f * 100.0F) * f * 0.01F
@@ -70,7 +78,7 @@ class EvilHorseRenderer(context: EntityRendererFactory.Context)
         if (f * 10.0F % 2 == 0.0F) {
             return 0.0F
         } else {
-            return MathHelper.clamp(f, 0.5F, 1.0F)
+            return MathHelper.clamp(f, 0.25F, 1.0F)
         }
     }
 
@@ -91,6 +99,7 @@ class EvilHorseRenderer(context: EntityRendererFactory.Context)
         state.fuseTime = entity.getLerpedFuseTime(f)
         state.charged = entity.isCharged()
         state.armor = entity.bodyArmor.copy()
+        state.isBaby = entity.isBaby
     }
 
 }

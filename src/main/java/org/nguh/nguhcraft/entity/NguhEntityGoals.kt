@@ -1,7 +1,6 @@
-package org.nguh.nguhcraft.entity.ai
+package org.nguh.nguhcraft.entity
 
 import net.minecraft.entity.ai.goal.Goal
-import org.nguh.nguhcraft.entity.mob.EvilHorseEntity
 import java.util.EnumSet
 
 class EvilHorseIgniteGoal(var evilHorse : EvilHorseEntity) : Goal() {

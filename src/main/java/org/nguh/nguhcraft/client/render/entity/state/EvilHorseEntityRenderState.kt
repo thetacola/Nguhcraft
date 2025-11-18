@@ -10,4 +10,5 @@ open class EvilHorseEntityRenderState() : LivingHorseEntityRenderState() {
     var armor = ItemStack.EMPTY
     var fuseTime = 0F
     var charged = false
+    var isBaby = false
 }

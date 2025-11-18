@@ -1,7 +1,24 @@
-package org.nguh.nguhcraft.entity.mob
+package org.nguh.nguhcraft.entity
 
-import net.minecraft.entity.*
-import net.minecraft.entity.ai.goal.*
+import net.minecraft.entity.AreaEffectCloudEntity
+import net.minecraft.entity.Entity
+import net.minecraft.entity.EntityStatuses
+import net.minecraft.entity.EntityType
+import net.minecraft.entity.EquipmentSlot
+import net.minecraft.entity.LazyEntityReference
+import net.minecraft.entity.LightningEntity
+import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.SpawnReason
+import net.minecraft.entity.ai.goal.ActiveTargetGoal
+import net.minecraft.entity.ai.goal.AnimalMateGoal
+import net.minecraft.entity.ai.goal.FleeEntityGoal
+import net.minecraft.entity.ai.goal.LookAroundGoal
+import net.minecraft.entity.ai.goal.LookAtEntityGoal
+import net.minecraft.entity.ai.goal.MeleeAttackGoal
+import net.minecraft.entity.ai.goal.RevengeGoal
+import net.minecraft.entity.ai.goal.SwimGoal
+import net.minecraft.entity.ai.goal.TemptGoal
+import net.minecraft.entity.ai.goal.WanderAroundFarGoal
 import net.minecraft.entity.attribute.DefaultAttributeContainer
 import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.entity.damage.DamageSource
@@ -9,7 +26,13 @@ import net.minecraft.entity.data.DataTracker
 import net.minecraft.entity.data.TrackedData
 import net.minecraft.entity.data.TrackedDataHandlerRegistry
 import net.minecraft.entity.effect.StatusEffectInstance
-import net.minecraft.entity.passive.*
+import net.minecraft.entity.passive.AbstractHorseEntity
+import net.minecraft.entity.passive.AnimalEntity
+import net.minecraft.entity.passive.CatEntity
+import net.minecraft.entity.passive.GoatEntity
+import net.minecraft.entity.passive.OcelotEntity
+import net.minecraft.entity.passive.PassiveEntity
+import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.particle.ParticleTypes
@@ -31,10 +54,8 @@ import net.minecraft.world.GameRules
 import net.minecraft.world.World
 import net.minecraft.world.WorldView
 import net.minecraft.world.event.GameEvent
-import org.nguh.nguhcraft.entity.NguhEntities
-import org.nguh.nguhcraft.entity.ai.EvilHorseIgniteGoal
 import org.nguh.nguhcraft.item.NguhItems
-import java.util.*
+import java.util.Optional
 import java.util.function.DoubleSupplier
 import java.util.function.IntUnaryOperator
 import java.util.function.Predicate
@@ -291,7 +312,7 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
     }
 
     override fun createChild(world: ServerWorld, entity: PassiveEntity): PassiveEntity? {
-        val evilHorseEntity = NguhEntities.EVIL_HORSE.create(world, net.minecraft.entity.SpawnReason.BREEDING)
+        val evilHorseEntity = NguhEntities.EVIL_HORSE.create(world, SpawnReason.BREEDING)
         if (evilHorseEntity != null && entity is EvilHorseEntity) {
             this.setChildAttributes(entity, evilHorseEntity)
             if (this.isTamed()) {
@@ -414,7 +435,8 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
         if (this.world is ServerWorld) {
             val serverWorld = world as ServerWorld
             if (serverWorld.gameRules.getBoolean(GameRules.SHOW_DEATH_MESSAGES)
-                && this.owner is ServerPlayerEntity) {
+                && this.owner is ServerPlayerEntity
+            ) {
                 val spe = owner as ServerPlayerEntity
                 spe.sendMessage(this.damageTracker.deathMessage)
             }
@@ -483,8 +505,12 @@ open class EvilHorseEntity(open val entityType: EntityType<out EvilHorseEntity>,
         this.goalSelector.add(3, FleeEntityGoal(this, OcelotEntity::class.java, 6.0f, 1.0, 1.2))
         this.goalSelector.add(3, FleeEntityGoal(this, CatEntity::class.java, 6.0f, 1.0, 1.2))
         this.goalSelector.add(4, AnimalMateGoal(this, 1.0))
-        this.goalSelector.add(5, TemptGoal(this, 1.2, Predicate { stack: ItemStack? -> stack!!.isIn(ItemTags.HORSE_FOOD) }, false))
-        this.goalSelector.add(5, TemptGoal(this, 1.2, Predicate { stack: ItemStack? -> stack!!.isIn(ItemTags.HORSE_TEMPT_ITEMS) }, false))
+        this.goalSelector.add(5,
+            TemptGoal(this, 1.2, Predicate { stack: ItemStack? -> stack!!.isIn(ItemTags.HORSE_FOOD) }, false)
+        )
+        this.goalSelector.add(5,
+            TemptGoal(this, 1.2, Predicate { stack: ItemStack? -> stack!!.isIn(ItemTags.HORSE_TEMPT_ITEMS) }, false)
+        )
         this.goalSelector.add(6, MeleeAttackGoal(this, 1.0, false))
         this.goalSelector.add(7, WanderAroundFarGoal(this, 0.8))
         this.goalSelector.add(8, LookAtEntityGoal(this, PlayerEntity::class.java, 128.0f))

@@ -1,6 +1,7 @@
 package org.nguh.nguhcraft.entity
 
 import EvilHorseRenderer
+import com.google.common.collect.ImmutableMap
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications
@@ -8,6 +9,8 @@ import net.fabricmc.fabric.api.biome.v1.BiomeSelectors
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
 import net.fabricmc.fabric.api.`object`.builder.v1.entity.FabricDefaultAttributeRegistry
+import net.minecraft.client.model.Dilation
+import net.minecraft.client.model.TexturedModelData
 import net.minecraft.client.render.entity.model.EntityModelLayer
 import net.minecraft.client.render.entity.state.LivingHorseEntityRenderState
 import net.minecraft.entity.Entity
@@ -24,7 +27,7 @@ import net.minecraft.world.Heightmap
 import net.minecraft.world.biome.BiomeKeys
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.client.render.entity.state.EvilHorseEntityRenderState
-import org.nguh.nguhcraft.entity.mob.EvilHorseEntity
+import org.nguh.nguhcraft.entity.EvilHorseEntity
 import org.nguh.nguhcraft.render.entity.model.EvilHorseModel
 
 
@@ -49,7 +52,15 @@ object NguhEntities {
     //  Entity model layers
     // =========================================================================
 
-    val MODEL_EVIL_HORSE_LAYER = EntityModelLayer(Id("evil_horse"), "main")
+    val MODEL_EVIL_HORSE_LAYER = registerLayer("evil_horse", "main")
+    val MODEL_EVIL_HORSE_CHARGE_LAYER = registerLayer("evil_horse", "charge")
+    val MODEL_EVIL_HORSE_BABY_LAYER = registerLayer("evil_horse_baby", "main")
+    val MODEL_EVIL_HORSE_BABY_CHARGE_LAYER = registerLayer("evil_horse_baby", "charge")
+
+
+    private fun registerLayer(id: String, name: String) : EntityModelLayer {
+        return EntityModelLayer(Id(id), name)
+    }
 
     private fun <C : Entity> register(
         key: String,
@@ -75,11 +86,23 @@ object NguhEntities {
         EntityRendererRegistry.register(EVIL_HORSE,
             { context -> EvilHorseRenderer(context) })
 
-
         EntityModelLayerRegistry.registerModelLayer(
             MODEL_EVIL_HORSE_LAYER,
-            EvilHorseModel::getTexturedModelData
+            EvilHorseModel::getEvilHorseTMD
         )
+        EntityModelLayerRegistry.registerModelLayer(
+            MODEL_EVIL_HORSE_BABY_LAYER,
+            EvilHorseModel::getEvilHorseBabyTMD
+        )
+        EntityModelLayerRegistry.registerModelLayer(
+            MODEL_EVIL_HORSE_CHARGE_LAYER,
+            EvilHorseModel::getEvilHorseChargeTMD
+        )
+        EntityModelLayerRegistry.registerModelLayer(
+            MODEL_EVIL_HORSE_BABY_CHARGE_LAYER,
+            EvilHorseModel::getEvilHorseBabyChargeTMD
+        )
+
     }
 
 }
